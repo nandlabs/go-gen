@@ -1,4 +1,4 @@
-package go_gen
+package gen
 
 import (
 	"bytes"
@@ -6,67 +6,66 @@ import (
 )
 
 type Struct struct {
-	*CodeBase
-	Name    string
-	Members map[string]*Member
+	*Base
+	name    string
+	members map[string]*members
 	source  *Source
 }
 
-type Member struct {
-	*CodeBase
-	Name      string
-	Typ       string
-	IsPointer bool
-	Tags      map[string]string
+type members struct {
+	*Base
+	name      string
+	qType     string
+	isPointer bool
+	tags      map[string]string
 }
 
-func (s *Struct) AddMember(name, typ string, isPointer bool) *Member {
+func (s *Struct) AddMember(name, typ string, isPointer bool) *members {
 	//TODO Add check for presence of valid type
-	// TODO Type Imports needs to be checked
+	// TODO Type imports needs to be checked
 
-	if v, ok := s.Members[name]; ok {
+	if v, ok := s.members[name]; ok {
 		return v
 	} else {
-		m := &Member{
-			Name:      name,
-			Typ:       typ,
-			IsPointer: isPointer,
-			Tags:      make(map[string]string),
+		m := &members{
+			name:      name,
+			qType:     typ,
+			isPointer: isPointer,
+			tags:      make(map[string]string),
+			Base: &Base{
+				GoGen:   s.GoGen,
+				Comment: "",
+			},
 		}
 		//TODO add  the import for struct reference from another package.
-		s.Members[name] = m
+		s.members[name] = m
 		return m
 	}
 
 }
 
-func (m *Member) AddTag(name, val string) *Member {
-	m.Tags[name] = val
+func (m *members) AddTag(name, val string) *members {
+	m.tags[name] = val
 	return m
 }
 
 func (s Struct) Generate(w io.Writer) {
 	var buf bytes.Buffer
-	if s.Comment != "" {
-		buf.WriteString("//")
-		buf.WriteString(s.Comment)
-		buf.WriteString("\n")
-
-	}
+	s.WriteComments(&buf)
 	buf.WriteString("type ")
-	buf.WriteString(s.Name + " struct { \n")
-	for k, v := range s.Members {
+	buf.WriteString(s.name + " struct { \n")
+	for k, v := range s.members {
 		buf.WriteString(k)
-		if v.IsPointer {
+		if v.isPointer {
 			buf.WriteString(" *")
 		} else {
 			buf.WriteString(" ")
 		}
-		buf.WriteString(v.Typ)
-		l := len(v.Tags)
+		buf.WriteString(v.qType)
+		l := len(v.tags)
 		if l > 0 {
 			buf.WriteString(" `") //Tag Start
-			for tn, tv := range v.Tags {
+			for tn, tv := range v.tags {
 				buf.WriteString(tn)
 				buf.WriteString(":\"")
 				buf.WriteString(tv)

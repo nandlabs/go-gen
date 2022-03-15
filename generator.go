@@ -1,4 +1,4 @@
-package go_gen
+package gen
 
 import (
 	"fmt"
@@ -55,14 +55,14 @@ func (g *GoGen) Source(dir, pkg, name string) *Source {
 
 		s := &Source{
 			CodeBase: &CodeBase{
-				Base:    &Base{GoGen: g},
-				Comment: "",
+				Base: &Base{GoGen: g, Comment: ""},
 			},
-			Dir:     "",
-			Pkg:     pkg,
-			Name:    name,
-			Structs: make(map[string]*Struct),
-			Imports: nil,
+			dir:       "",
+			pkg:       pkg,
+			name:      name,
+			structs:   make(map[string]*Struct),
+			functions: make(map[string]*Function),
+			imports:   nil,
 		}
 		g.Sources[getSourceId(dir, pkg, name)] = s
 		return s
@@ -79,12 +79,12 @@ func (g *GoGen) Generate() {
 
 	for k, v := range g.Sources {
 		fmt.Println("Generating source file for key:" + k)
-		sourceDir := path.Join(g.BaseDir, v.Dir)
+		sourceDir := path.Join(g.BaseDir, v.dir)
 		err := os.MkdirAll(sourceDir, os.ModePerm)
 		if err != nil {
 			panic(err.Error())
 		}
-		f, err := os.Create(path.Join(sourceDir, v.Name))
+		f, err := os.Create(path.Join(sourceDir, v.name))
 		if err != nil {
 			panic(err.Error())
 		}
